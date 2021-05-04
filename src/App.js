@@ -4,7 +4,8 @@ import Post from './components/Post';
 import { db, auth } from './firebase';
 import { makeStyles } from '@material-ui/core/styles';
 import Modal from '@material-ui/core/Modal';
-import { Button,Input } from '@material-ui/core';
+import { Button, Input } from '@material-ui/core';
+import ImageUpload from './components/ImageUpload';
 
 
 function getModalStyle() {
@@ -37,9 +38,9 @@ function App() {
     const [modalStyle] = useState(getModalStyle);
     const [posts, setPosts] = useState([])
     const [open, setOpen] = useState(false)
-    const [email , setEmail] = useState('');
-    const [username , setUsername] = useState('');
-    const [password , setPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const [user, setUser] = useState(null);
     const [openSignIn, setOpenSignIn] = useState(false);
 
@@ -47,12 +48,12 @@ function App() {
     const signUp = (event) => {
         event.preventDefault();
         auth.createUserWithEmailAndPassword(email, password)
-        .then((authUser) => {
-            return authUser.user.updateProfile({
-                displayName : username
+            .then((authUser) => {
+                return authUser.user.updateProfile({
+                    displayName: username
+                })
             })
-        })
-        .catch((error) => alert(error.message));
+            .catch((error) => alert(error.message));
 
         setOpen(false);
     }
@@ -60,13 +61,13 @@ function App() {
     const signIn = (event) => {
         event.preventDefault();
         auth.signInWithEmailAndPassword(email, password)
-        .catch((error)=> alert(error.message))
+            .catch((error) => alert(error.message))
 
         setOpenSignIn(false);
     }
 
     useEffect(() => {
-        const unsubscribe =  auth.onAuthStateChanged((authUser) => {
+        const unsubscribe = auth.onAuthStateChanged((authUser) => {
             if (authUser) {
                 //Loggs in
                 console.log(authUser);
@@ -91,7 +92,7 @@ function App() {
     }, [user, username])
 
     useEffect(() => {
-        db.collection('posts').onSnapshot(snapshot => {
+        db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
             setPosts(snapshot.docs.map(doc => ({
                 id: doc.id,
                 post: doc.data()
@@ -102,6 +103,13 @@ function App() {
 
     return (
         <div className="App">
+
+            {/* {user?.displayName ? (
+                <ImageUpload username={user.displayName} />)
+                :
+                (<h3> Login in to upload</h3>
+            )} */}
+
             <Modal
                 open={open}
                 onClose={() => setOpen(false)}
@@ -110,13 +118,13 @@ function App() {
                 <div style={modalStyle} className={classes.paper}>
                     <form className='app__signup'>
                         <center>
-                            <img 
-                            className="app__headerimage" 
-                            alt="abc" 
-                            src="https://www.androidguys.com/wp-content/uploads/2015/04/insta.png"
+                            <img
+                                className="app__headerimage"
+                                alt="abc"
+                                src="https://www.androidguys.com/wp-content/uploads/2015/04/insta.png"
                             />
 
-                            
+
                         </center>
                         <Input
                             type='text'
@@ -150,13 +158,13 @@ function App() {
                 <div style={modalStyle} className={classes.paper}>
                     <form className='app__signup'>
                         <center>
-                            <img 
-                            className="app__headerimage" 
-                            alt="abc" 
-                            src="https://www.androidguys.com/wp-content/uploads/2015/04/insta.png"
+                            <img
+                                className="app__headerimage"
+                                alt="abc"
+                                src="https://www.androidguys.com/wp-content/uploads/2015/04/insta.png"
                             />
 
-                            
+
                         </center>
                         <Input
                             type='email'
@@ -175,28 +183,47 @@ function App() {
                     </form>
                 </div>
             </Modal>
-            <div className="app_header">
+            <div className="app__header">
                 <img
-                    className='app_headerImage'
+                    className='app__headerImage'
                     src='https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png'
                     alt='instagram'
 
                 />
 
+                {user ? (
+                    <Button onClick={() => auth.signOut()}> Log Out</Button>)
+                    :
+                    (<div className='app__loginContainer'>
+                        <Button onClick={() => setOpenSignIn(true)} > Signin</Button>
+                        <Button onClick={() => setOpen(true)} > Sign up</Button>
+                    </div>)
+                }
+
             </div >
-            {user ? (
+            {/* {user ? (
                 <Button onClick={() => auth.signOut()}> Log Out</Button>)
-                : 
+                :
                 (<div className='app__loginContainer'>
                     <Button onClick={() => setOpenSignIn(true)} > Signin</Button>
                     <Button onClick={() => setOpen(true)} > Sign up</Button>
                 </div>)
-            }
+            } */}
             {/* <Button onClick={() => setOpen(true)} > Sign up</Button> */}
+            <div className='app__posts'>
+                {
+                posts.map(({ post, id }) => (
+                    <Post postId={id} username={post.username} user= {user} caption={post.caption} imageUrl={post.imageUrl} />
+                ))
+                }
 
-            {posts.map(({ post, id }) => (
-                <Post key={id} username={post.username} caption={post.caption} imageUrl={post.imageUrl} />
-            ))}
+            </div>
+
+            {user?.displayName ? (
+                <ImageUpload username={user.displayName} />)
+                :
+                (<h3> Login in to upload</h3>
+                )}
 
 
         </div>
